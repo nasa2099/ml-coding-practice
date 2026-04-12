@@ -76,7 +76,7 @@ def getNaverSearch(node, srcText, page_start, display):
 # -------------------------------
 def getRequestUrl(url):
 
-    req = urllib.request.Request(url)python naverapi.py
+    req = urllib.request.Request(url)
 
     # 🔑 Add headers
     req.add_header("X-Naver-Client-Id", client_id)
