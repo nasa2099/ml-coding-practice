@@ -5,8 +5,8 @@ import datetime
 import json
 
 # 🔑 Coloca aqui as tuas chaves da Naver
-client_id = "GX9WkQq0zXXPFZdQnl48"
-client_secret = "RU3Rk2lrnSjFBJxJ3KIx"
+client_id = "RU3Rk2lrnSjFBJxJ3KIx"
+client_secret = "nn30rwZDp6"
 
 
 # -------------------------------
