@@ -4,87 +4,128 @@ import datetime
 import json
 import pandas as pd
 
-ServiceKey = "자신의 Service Key"
+# 🔑 Coloca aqui a tua Service Key
+ServiceKey = "5b2544edb60938a65649bea31d935184bba28f7350cd339a4ab03713c30c4f62"
 
-"""### [CODE 0]"""
 
+# -------------------------------
+# MAIN FUNCTION
+# -------------------------------
 def main():
-  jsonResult = []
-  result = []
+    jsonResult = []
+    result = []
 
-  print("<< 국내 입국한 외국인의 통계 데이터를 수집합니다. >>")
-  nat_cd = input('국가 코드를 입력하세요(중국: 112 / 일본: 130 / 미국: 275) :')
-  nStartYear = int(input('데이터를 몇 년부터 수집할까요? : '))
-  nEndYear = int(input('데이터를 몇 년까지 수집할까요? : '))
-  ed_cd = "E" 		                      # E : 방한외래관광객, D : 해외 출국
+    print("<< 국내 입국한 외국인의 통계 데이터를 수집합니다. >>")
 
-  jsonResult, result, natName, dataEND = getTourismStatsService(nat_cd, ed_cd, nStartYear, nEndYear)  #[CODE 3]
+    nat_cd = input('국가 코드를 입력하세요(중국: 112 / 일본: 130 / 미국: 275) : ')
+    nStartYear = int(input('데이터를 몇 년부터 수집할까요? : '))
+    nEndYear = int(input('데이터를 몇 년까지 수집할까요? : '))
+    ed_cd = "E"  # E: 입국, D: 출국
 
-  #파일저장 : csv 파일
-  columns = ["입국자국가", "국가코드", "입국연월", "입국자 수"]
-  result_df = pd.DataFrame(result, columns = columns)
-  result_df.to_csv('./%s_%s_%d_%s.csv' % (natName, ed_cd, nStartYear, dataEND), index = False, encoding = 'cp949')
+    jsonResult, result, natName, dataEND = getTourismStatsService(
+        nat_cd, ed_cd, nStartYear, nEndYear
+    )
 
-"""### [CODE 3]"""
+    # 📁 Save CSV file
+    columns = ["입국자국가", "국가코드", "입국연월", "입국자 수"]
+    result_df = pd.DataFrame(result, columns=columns)
 
+    filename = f"{natName}_{ed_cd}_{nStartYear}_{dataEND}.csv"
+    result_df.to_csv(filename, index=False, encoding='cp949')
+
+    print(f"\n파일 저장 완료: {filename}")
+
+
+# -------------------------------
+# GET TOURISM DATA
+# -------------------------------
 def getTourismStatsService(nat_cd, ed_cd, nStartYear, nEndYear):
-  jsonResult = []
-  result = []
+    jsonResult = []
+    result = []
 
-  for year in range(nStartYear, nEndYear+1):
-    for month in range(1, 13):
-      yyyymm = "{0}{1:0>2}".format(str(year), str(month))
-      jsonData = getTourismStatsItem(yyyymm, nat_cd, ed_cd)     #[CODE 2]
-      if (jsonData['response']['header']['resultMsg'] == 'OK'):
-        #데이터가 없는 마지막 항목인 경우 ----------------------------
-        if jsonData['response']['body']['items'] == '':
-          dataEND = "{0}{1:0>2}".format(str(year), str(month-1))
-          print("데이터 없음.... \n제공되는 통계 데이터는 %s년 %s월까지입니다." % (str(year), str(month-1)))
-          break
-        #jsonData를 출력하여 확인............................................
-        print(json.dumps(jsonData, indent = 4, sort_keys = True, ensure_ascii = False))
+    natName = ""   # 🔧 fix
+    dataEND = ""   # 🔧 fix
 
-        natName = jsonData['response']['body']['items']['item']['natKorNm']
-        natName = natName.replace(' ', '')
-        num = jsonData['response']['body']['items']['item']['num']
-        ed = jsonData['response']['body']['items']['item']['ed']
-        print('[ %s_%s : %s ]' % (natName, yyyymm, num))
-        print('------------------------------------------------------')
-        jsonResult.append({'nat_name': natName, 'nat_cd': nat_cd, 'yyyymm': yyyymm, 'visit_cnt': num})
-        result.append([natName, nat_cd, yyyymm, num])
+    for year in range(nStartYear, nEndYear + 1):
+        for month in range(1, 13):
+            yyyymm = f"{year}{month:02d}"
 
-  return (jsonResult, result, natName, ed)
+            jsonData = getTourismStatsItem(yyyymm, nat_cd, ed_cd)
 
-"""### [CODE 2]"""
+            if jsonData is None:
+                continue
 
+            if jsonData['response']['header']['resultMsg'] == 'OK':
+
+                # ❗ if no more data
+                if jsonData['response']['body']['items'] == '':
+                    dataEND = f"{year}{month-1:02d}"
+                    print(f"\n데이터 없음 → 마지막 데이터: {dataEND}")
+                    break
+
+                # Extract data
+                item = jsonData['response']['body']['items']['item']
+
+                natName = item['natKorNm'].replace(' ', '')
+                num = item['num']
+
+                print(f"[ {natName}_{yyyymm} : {num} ]")
+                print('-----------------------------')
+
+                jsonResult.append({
+                    'nat_name': natName,
+                    'nat_cd': nat_cd,
+                    'yyyymm': yyyymm,
+                    'visit_cnt': num
+                })
+
+                result.append([natName, nat_cd, yyyymm, num])
+
+    return (jsonResult, result, natName, dataEND)
+
+
+# -------------------------------
+# CALL API
+# -------------------------------
 def getTourismStatsItem(yyyymm, nat_cd, ed_cd):
-  service_url = "http://openapi.tour.go.kr/openapi/service/EdrcntTourismStatsService/getEdrcntTourismStatsList"
-  parameters = "?_type=json&serviceKey=" + ServiceKey       # 인증키
-  parameters += "&YM=" + yyyymm
-  parameters += "&NAT_CD=" + nat_cd
-  parameters += "&ED_CD=" + ed_cd
+    service_url = "http://openapi.tour.go.kr/openapi/service/EdrcntTourismStatsService/getEdrcntTourismStatsList"
 
-  url = service_url + parameters
+    parameters = "?_type=json"
+    parameters += "&serviceKey=" + ServiceKey
+    parameters += "&YM=" + yyyymm
+    parameters += "&NAT_CD=" + nat_cd
+    parameters += "&ED_CD=" + ed_cd
 
-  responseDecode = getRequestUrl(url) 	                    #[CODE 1]
+    url = service_url + parameters
 
-  if (responseDecode == None):
-    return None
-  else:
-    return json.loads(responseDecode)
+    responseDecode = getRequestUrl(url)
 
-"""### [CODE 1]"""
+    if responseDecode is None:
+        return None
+    else:
+        return json.loads(responseDecode)
 
-def getRequestUrl(url):  #[CODE 1]
-  req = urllib.request.Request(url)
-  try:
-    response = urllib.request.urlopen(req)
-    if response.getcode() == 200:
-      print("[%s] Url Request Success" % datetime.datetime.now())
-      return response.read().decode('utf-8')
-  except Exception as e:
-    print(e)
-    print("[%s] Error for URL : %s" % (datetime.datetime.now(), url))
-    return None
 
+# -------------------------------
+# REQUEST FUNCTION
+# -------------------------------
+def getRequestUrl(url):
+    req = urllib.request.Request(url)
+
+    try:
+        response = urllib.request.urlopen(req)
+
+        if response.getcode() == 200:
+            print(f"[{datetime.datetime.now()}] Url Request Success")
+            return response.read().decode('utf-8')
+
+    except Exception as e:
+        print(e)
+        print(f"[{datetime.datetime.now()}] Error for URL : {url}")
+        return None
+
+
+# -------------------------------
+# RUN
+# -------------------------------
 main()
