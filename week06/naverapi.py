@@ -6,7 +6,7 @@ import json
 
 # 🔑 Coloca aqui as tuas chaves da Naver
 client_id = "GX9WkQq0zXXPFZdQnl48"
-client_secret = "HrijlA3Ay6"
+client_secret = "RU3Rk2lrnSjFBJxJ3KIx"
 
 
 # -------------------------------
