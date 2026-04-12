@@ -5,7 +5,7 @@ import json
 import pandas as pd
 
 # 🔑 Coloca aqui a tua Service Key
-ServiceKey = "SUA_SERVICE_KEY_AQUI"
+ServiceKey = "5b2544edb60938a65649bea31d935184bba28f7350cd339a4ab03713c30c4f62"
 
 
 # -------------------------------
