@@ -84,4 +84,8 @@ def getPostData(post, jsonResult, cnt):
                        'org_link': org_link, 'link': link, 'pDate': pDate})
 
 
+<<<<<<< HEAD
 main()
+=======
+main()
+>>>>>>> 0e3fd0cd1253d2954791652c61bca8afcf9864c3
